@@ -91,6 +91,32 @@ lyapunov:  $(OBJECTS_lyapunov)
 
 
 #============================================================
+#	Largest_Lyapunov_exponent
+#============================================================
+SOURCES_largest=Largest_Lyapunov_exponent.c metodos_matrices.c
+OBJECTS_largest=$(SOURCES_largest:.c=.o)
+
+largest:  $(OBJECTS_largest)
+	$(CC) $(OPT) $(LDFLAGS) Largest_Lyapunov_exponent.x $(OBJECTS_largest) $(GSLFLAGS) $(MATHFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $< -o $@
+
+
+#============================================================
+#	Box dimension
+#============================================================
+SOURCES_box=Box_Dimension.c metodos_matrices.c
+OBJECTS_box=$(SOURCES_box:.c=.o)
+
+box:  $(OBJECTS_box)
+	$(CC) $(OPT) $(LDFLAGS) Box_Dimension.x $(OBJECTS_box) $(GSLFLAGS) $(MATHFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $< -o $@
+
+
+#============================================================
 #	Clean ALL
 #============================================================
 clean:

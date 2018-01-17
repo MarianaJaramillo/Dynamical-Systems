@@ -1,0 +1,4 @@
+./C_codes/*.o
+./C_codes/*.x
+./C_codes/*.dat
+./C_codes/*.ods

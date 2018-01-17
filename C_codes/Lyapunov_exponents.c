@@ -22,7 +22,7 @@ void System_Map(double *X,
   /*============================================================
     Retorna por referencia la solución al mapa de Hénon
 
-    Hénon(x,y) = (a - x^2 - b y , x)
+    Hénon(x,y) = (a - x^2 + b y , x)
   ============================================================*/
 
   *X = a - x*x + b*y;
@@ -44,7 +44,7 @@ void Jacobian_Map(double **Jac,
 
     Para el mapa de Hénon N=2
 
-      Jac_Hénon(x,y) = [ [- 2 x, - b] , [1 , 0] ]
+      Jac_Hénon(x,y) = [ [- 2 x, + b] , [1 , 0] ]
 
     En C:
 
@@ -53,8 +53,8 @@ void Jacobian_Map(double **Jac,
   //Jac[0][0] = - 2 * x
   *(*(Jac + 0) + 0) = - 2.0 * x;
 
-  //Jac[0][1] = - b
-  *(*(Jac + 0) + 1) = - b;
+  //Jac[0][1] = + b
+  *(*(Jac + 0) + 1) = b;
 
   //Jac[1][0] = 1
   *(*(Jac + 1) + 0) = 1.0;
