@@ -1,4 +1,10 @@
-./C_codes/*.o
-./C_codes/*.x
-./C_codes/*.dat
-./C_codes/*.ods
+C_codes/Box_Dimension.o
+C_codes/Box_Dimension.x
+C_codes/Henon_box_dimension.dat
+C_codes/Henon_box_dimension.ods
+C_codes/Largest_Lyapunov_exponent.o
+C_codes/Largest_Lyapunov_exponent.x
+C_codes/Lyapunov_exponents.o
+C_codes/Lyapunov_exponents.x
+C_codes/lyapunov.dat
+C_codes/metodos_matrices.o
