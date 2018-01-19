@@ -1,39 +1,5 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-
-// Librería para manejo de matrices
-#include "metodos_matrices.h"
-
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  DEFINICIÓN DE FUNCIONES
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-
-/*============================================================
-  System's Time Series
-
-    points[Npoints][dimension]
-
-      **points: It stores the points of the system.
-
-      Npoints: It gives us information about how
-              many points has the time series.
-
-      dimension: It gives us information about the
-                dimensionality of the system.
-
-    Thus:
-
-      points[i][j] ---> corresponds to the j-th component
-                        of the i-th point.
-*/
-typedef struct Time_Series {
-  double **points;
-  size_t Npoints;
-  size_t dimension;
-} Time_Series;
+// Library for calculating fractal dimensions
+#include "Fractal_Dimension.h"
 
 
 //============================================================
@@ -52,7 +18,7 @@ double logbase(double y, int b) {
 
 //============================================================
 
-void Box_Dimension(Time_Series * sys,
+void Box_Dimension(Dynamical_System * sys,
                   double epsilon,
                   int max_exponent,
                   char *filename) {
@@ -243,84 +209,4 @@ void Box_Dimension(Time_Series * sys,
             , logbase((double) Nboxes, 2.0));
   }
   fclose(file);
-}
-
-
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  MAIN
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-
-int main(int argc, char *argv[]) {
-  /*============================================================
-    Largest Lyapunov exponent
-  ============================================================
-
-    El programa calcula la dimensión fractal por conteo de cajas
-    para el mapa de Henón.
-
-    El programa genera el siguiente archivo de salida:
-
-      Henon_box_dimension.dat ---> archivo con el exponente más largo
-                                  de Lyapunov calculado hasta
-                                  Nmax iteraciones.
-
-    EJECUCION DEL PROGRAMA
-
-      ./Box_Dimension.x x0 y0 a b Nmax DRo
-
-    Donde:
-
-      - x0 : condición inicial de x
-
-      - y0 : condición inicial de y
-
-      - a : valor de a
-
-      - b : valor de b
-
-      - Nmax : Número máximo de iteraciones
-
-      - epsilon : tamaño base de la grilla
-
-      - max_exponent : exponente máximo de la reducción
-  ============================================================*/
-
-  // Variables
-  int max_exponent;
-  double x0, y0, a, b, epsilon;
-  Time_Series sys;
-
-  // Variables internas del programa
-  int i;
-  //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-  x0 = 0.5;
-  y0 = 0.5;
-  a = 1.4;
-  b = 0.3;
-  epsilon  = 0.1;
-  max_exponent = 10;
-
-  sys.dimension = 2;
-  sys.Npoints = 10000;
-  sys.points = (double **) malloc((size_t) sys.Npoints * sizeof(double*));
-  for(i = 0; i < (sys.Npoints); i++) {
-    sys.points[i] = (double *) malloc((size_t) sys.dimension * sizeof(double));
-  }
-
-  sys.points[0][0] = x0;
-  sys.points[0][1] = y0;
-
-  for(i = 1; i < (sys.Npoints); i++) {
-    sys.points[i][0] = a - sys.points[i-1][0]*sys.points[i-1][0]
-                      + b * sys.points[i-1][1];
-    sys.points[i][1] = sys.points[i-1][0];
-  }
-
-  Box_Dimension(&sys,
-                epsilon,
-                max_exponent,
-                "Henon_box_dimension.dat");
-
-  return 0;
 }
