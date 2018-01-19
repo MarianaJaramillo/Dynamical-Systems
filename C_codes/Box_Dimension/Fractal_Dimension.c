@@ -30,7 +30,7 @@ void Box_Dimension(Dynamical_System * sys,
   ============================================================*/
   double aux, l_aux, factor_decrease;
   int i, j, exponent, Npuntos, Nboxes, point_detection;
-  double **box=NULL;
+  double **box=NULL, **points=NULL;
   FILE *file=NULL;
 
   file = fopen(filename,"w");
@@ -74,16 +74,30 @@ void Box_Dimension(Dynamical_System * sys,
   );
 
   /*============================================================
-    Asign a memory block for the auxiliar matrix
+    Asign a memory block for the next auxiliar matrix
 
-      **box
+      **box: for storing the box's limits
 
-    which will store the box's limits
+      **points: for storing system's points and avoiding
+                to modify it
   ============================================================*/
   box = (double **) malloc((size_t) (sys->dimension) * sizeof(double*));
   for(j = 0; j < (sys->dimension); j++) {
     box[j] = (double *) malloc((size_t) 2 * sizeof(double));
   }
+
+  points = (double **) malloc((size_t) (sys->Npoints) * sizeof(double*));
+  for(j = 0; j < (sys->Npoints); j++) {
+    points[j] = (double *) malloc((size_t) (sys->dimension) * sizeof(double));
+  }
+
+  /*============================================================
+    Copy sys->points to **points
+  ============================================================*/
+  Copiar_Matrices(sys->points,
+                  points,
+                  sys->Npoints,
+                  sys->dimension);
 
   for(exponent = 0; exponent <= max_exponent; exponent++){
     /*============================================================
@@ -128,7 +142,7 @@ void Box_Dimension(Dynamical_System * sys,
         /*============================================================
           Take the first point and define box's limits
         ============================================================*/
-        l_aux = factor_decrease * sys->points[0][j] /epsilon;
+        l_aux = factor_decrease * points[0][j] /epsilon;
         box[j][0] = floor(l_aux) * epsilon/factor_decrease;
         box[j][1] = epsilon/factor_decrease * (floor(l_aux) + 1.0);
       }
@@ -142,9 +156,9 @@ void Box_Dimension(Dynamical_System * sys,
         this point to the last position of the array of points
       ============================================================*/
       for(j = 0; j < sys->dimension; j++){
-        aux = sys->points[0][j];
-        sys->points[0][j] = sys->points[Npuntos - 1][j];
-        sys->points[Npuntos - 1][j] = aux;
+        aux = points[0][j];
+        points[0][j] = points[Npuntos - 1][j];
+        points[Npuntos - 1][j] = aux;
       }
 
       /*============================================================
@@ -168,7 +182,7 @@ void Box_Dimension(Dynamical_System * sys,
           point_detection = 1;
 
           for(j = 0; j < sys->dimension; j++){
-            if(sys->points[i][j] < box[j][0] || box[j][1] <= sys->points[i][j]){
+            if(points[i][j] < box[j][0] || box[j][1] <= points[i][j]){
               point_detection = 0;
               break;
             }
@@ -182,9 +196,9 @@ void Box_Dimension(Dynamical_System * sys,
               this point to the last position of the array of points
             ============================================================*/
             for(j = 0; j < sys->dimension; j++){
-              aux = sys->points[i][j];
-              sys->points[i][j] = sys->points[Npuntos - 1][j];
-              sys->points[Npuntos - 1][j] = aux;
+              aux = points[i][j];
+              points[i][j] = points[Npuntos - 1][j];
+              points[Npuntos - 1][j] = aux;
             }
 
             /*============================================================
@@ -208,5 +222,25 @@ void Box_Dimension(Dynamical_System * sys,
             , logbase(factor_decrease/epsilon, 2.0)
             , logbase((double) Nboxes, 2.0));
   }
+
+  /*============================================================
+    Free **points
+  ============================================================*/
+  for(i = 0; i < (sys->Npoints); i++) {
+    free(points[i]);
+  }
+  free(points);
+
+  /*============================================================
+    Free **box
+  ============================================================*/
+  for(i = 0; i < 2; i++) {
+    free(box[i]);
+  }
+  free(box);
+
+  /*============================================================
+    Close file
+  ============================================================*/
   fclose(file);
 }

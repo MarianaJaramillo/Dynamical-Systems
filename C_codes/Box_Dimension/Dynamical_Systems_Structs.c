@@ -18,16 +18,26 @@ void Dynamical_System_alloc(Dynamical_System * sys,
   sys->transient = transient;
 
   /*============================================================
-    Setting up system's points
+    Setting up system's parameters
   ============================================================*/
   sys->params = (double *) malloc((size_t) sys->Nparams * sizeof(double));
+
+  /*============================================================
+    Setting up system's initial points
+  ============================================================*/
   sys->initial_point = (double *) malloc((size_t) sys->dimension * sizeof(double));
 
+  /*============================================================
+    Setting up system's points in transient regime
+  ============================================================*/
   sys->transient_points = (double **) malloc((size_t) sys->transient * sizeof(double*));
   for(i = 0; i < (sys->transient); i++) {
     sys->transient_points[i] = (double *) malloc((size_t) sys->dimension * sizeof(double));
   }
 
+  /*============================================================
+    Setting up system's points
+  ============================================================*/
   sys->points = (double **) malloc((size_t) sys->Npoints * sizeof(double*));
   for(i = 0; i < (sys->Npoints); i++) {
     sys->points[i] = (double *) malloc((size_t) sys->dimension * sizeof(double));
@@ -42,19 +52,30 @@ void Dynamical_System_free(Dynamical_System * sys) {
   int i;
 
   /*============================================================
-    Setting up system's points
+    Free system's initial points
   ============================================================*/
-  for(i = 0; i < (sys->Npoints); i++) {
-    free(sys->points[i]);
-  }
-  free(sys->points);
+  free(sys->initial_point);
 
+  /*============================================================
+    Free system's parameters
+  ============================================================*/
+  free(sys->params);
+
+  /*============================================================
+    Free system's points in transient regime
+  ============================================================*/
   for(i = 0; i < (sys->transient); i++) {
     free(sys->transient_points[i]);
   }
   free(sys->transient_points);
 
-  free(sys->initial_point);
+  /*============================================================
+    Free system's points
+  ============================================================*/
+  for(i = 0; i < (sys->Npoints); i++) {
+    free(sys->points[i]);
+  }
+  free(sys->points);
 }
 
 
