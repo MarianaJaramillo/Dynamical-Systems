@@ -65,45 +65,6 @@ GSLFLAGS=-lgsl -lgslcblas
 
 
 #============================================================
-#	Periodograma
-#============================================================
-SOURCES_periodograma=Periodograma.c
-OBJECTS_periodograma=$(SOURCES_periodograma:.c=.o)
-
-periodograma:  $(OBJECTS_periodograma)
-	$(CC) $(OPT) $(LDFLAGS) Periodograma.x $(OBJECTS_periodograma) $(GSLFLAGS) $(MATHFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) $< -o $@
-
-
-#============================================================
-#	Exponentes de Lyapunov
-#============================================================
-SOURCES_lyapunov=Lyapunov_exponents.c metodos_matrices.c
-OBJECTS_lyapunov=$(SOURCES_lyapunov:.c=.o)
-
-lyapunov:  $(OBJECTS_lyapunov)
-	$(CC) $(OPT) $(LDFLAGS) Lyapunov_exponents.x $(OBJECTS_lyapunov) $(GSLFLAGS) $(MATHFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) $< -o $@
-
-
-#============================================================
-#	Largest_Lyapunov_exponent
-#============================================================
-SOURCES_largest=Largest_Lyapunov_exponent.c metodos_matrices.c
-OBJECTS_largest=$(SOURCES_largest:.c=.o)
-
-largest:  $(OBJECTS_largest)
-	$(CC) $(OPT) $(LDFLAGS) Largest_Lyapunov_exponent.x $(OBJECTS_largest) $(GSLFLAGS) $(MATHFLAGS)
-
-%.o: %.c
-	$(CC) $(CFLAGS) $< -o $@
-
-
-#============================================================
 #	Box dimension
 #============================================================
 SOURCES_box=Box_Dimension.c Fractal_Dimension.c Dynamical_Systems_Structs.c metodos_matrices.c
