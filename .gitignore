@@ -8,3 +8,8 @@ C_codes/Lyapunov_exponents.o
 C_codes/Lyapunov_exponents.x
 C_codes/lyapunov.dat
 C_codes/metodos_matrices.o
+C_codes/Box_Dimension/Box_Dimension.o
+C_codes/Box_Dimension/Box_Dimension.x
+C_codes/Box_Dimension/Dynamical_Systems_Structs.o
+C_codes/Box_Dimension/Fractal_Dimension.o
+C_codes/Box_Dimension/metodos_matrices.o

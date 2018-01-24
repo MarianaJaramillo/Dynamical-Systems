@@ -28,10 +28,13 @@ void Box_Dimension(Dynamical_System * sys,
     - max_exponent:
     - epsilon:
   ============================================================*/
-  double aux, l_aux, factor_decrease;
-  int i, j, exponent, Npuntos, Nboxes, point_detection;
+  double asst, l_asst, factor_decrease;
+  int i, j, exponent, Npoints, Nboxes, point_detection;
   double **box=NULL, **points=NULL;
   FILE *file=NULL;
+
+  FILE *boxfile=NULL;
+  char *archivo;
 
   file = fopen(filename,"w");
 
@@ -74,7 +77,7 @@ void Box_Dimension(Dynamical_System * sys,
   );
 
   /*============================================================
-    Asign a memory block for the next auxiliar matrix
+    Asign a memory block for the assistant matrix
 
       **box: for storing the box's limits
 
@@ -94,10 +97,10 @@ void Box_Dimension(Dynamical_System * sys,
   /*============================================================
     Copy sys->points to **points
   ============================================================*/
-  Copiar_Matrices(sys->points,
-                  points,
-                  sys->Npoints,
-                  sys->dimension);
+  Matrix_copy(sys->points,
+              points,
+              sys->Npoints,
+              sys->dimension);
 
   for(exponent = 0; exponent <= max_exponent; exponent++){
     /*============================================================
@@ -133,19 +136,38 @@ void Box_Dimension(Dynamical_System * sys,
     ============================================================*/
     Nboxes = 0;
 
+    /*=========================================================
+      %%%% PARA IMPRIMIR CAJAS
+    =========================================================*/
+    sprintf(archivo,
+      "Boxes_Exponent_%d.dat"
+      , exponent
+    );
+    boxfile = fopen(archivo,"w");
+
+    fprintf(boxfile,
+            "x0\tx1\ty0\ty1\n");
+
     /*============================================================
       Cycle for counting Nboxes
     ============================================================*/
-    Npuntos = sys->Npoints;
-    while(Npuntos > 0) {
+    Npoints = sys->Npoints;
+    while(Npoints > 0) {
       for(j = 0; j < sys->dimension; j++) {
         /*============================================================
           Take the first point and define box's limits
         ============================================================*/
-        l_aux = factor_decrease * points[0][j] /epsilon;
-        box[j][0] = floor(l_aux) * epsilon/factor_decrease;
-        box[j][1] = epsilon/factor_decrease * (floor(l_aux) + 1.0);
+        l_asst = factor_decrease * points[0][j] /epsilon;
+        box[j][0] = floor(l_asst) * epsilon/factor_decrease;
+        box[j][1] = epsilon/factor_decrease * (floor(l_asst) + 1.0);
       }
+
+      //##################################
+      fprintf(boxfile,
+              "%lf\t%lf\t%lf\t%lf\n"
+              , box[0][0], box[0][1], box[1][0], box[1][1]
+            );
+
       /*============================================================
         Increment number of boxes
       ============================================================*/
@@ -156,18 +178,18 @@ void Box_Dimension(Dynamical_System * sys,
         this point to the last position of the array of points
       ============================================================*/
       for(j = 0; j < sys->dimension; j++){
-        aux = points[0][j];
-        points[0][j] = points[Npuntos - 1][j];
-        points[Npuntos - 1][j] = aux;
+        asst = points[0][j];
+        points[0][j] = points[Npoints - 1][j];
+        points[Npoints - 1][j] = asst;
       }
 
       /*============================================================
         Decrease number of points
       ============================================================*/
-      Npuntos--;
+      Npoints--;
 
-      if (Npuntos > 0) {
-        for(i = 0; i < Npuntos; i++) {
+      if (Npoints > 0) {
+        for(i = 0; i < Npoints; i++) {
           /*============================================================
             Detect if the i-th point belongs to the box
 
@@ -196,15 +218,15 @@ void Box_Dimension(Dynamical_System * sys,
               this point to the last position of the array of points
             ============================================================*/
             for(j = 0; j < sys->dimension; j++){
-              aux = points[i][j];
-              points[i][j] = points[Npuntos - 1][j];
-              points[Npuntos - 1][j] = aux;
+              asst = points[i][j];
+              points[i][j] = points[Npoints - 1][j];
+              points[Npoints - 1][j] = asst;
             }
 
             /*============================================================
               Decrease number of points
             ============================================================*/
-            Npuntos--;
+            Npoints--;
 
             /*============================================================
               Decrease counter i thus allowing to repeat evaluation for
@@ -215,6 +237,8 @@ void Box_Dimension(Dynamical_System * sys,
         }
       }
     }
+    //################
+    fclose(boxfile);
 
     fprintf(file,
             "%g\t%g\t%d\t%d\t%.16g\t%.16g\n"
@@ -234,9 +258,9 @@ void Box_Dimension(Dynamical_System * sys,
   /*============================================================
     Free **box
   ============================================================*/
-  for(i = 0; i < 2; i++) {
-    free(box[i]);
-  }
+  //for(i = 0; i < 2; i++) {
+  //  free(box[i]);
+  //}
   free(box);
 
   /*============================================================

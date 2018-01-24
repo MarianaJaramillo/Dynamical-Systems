@@ -67,7 +67,7 @@ GSLFLAGS=-lgsl -lgslcblas
 #============================================================
 #	Box dimension
 #============================================================
-SOURCES_box=Box_Dimension.c Fractal_Dimension.c Dynamical_Systems_Structs.c metodos_matrices.c
+SOURCES_box=Box_Dimension.c Fractal_Dimension.c Dynamical_Systems_Structs.c Matrix-Vector_methods.c
 OBJECTS_box=$(SOURCES_box:.c=.o)
 
 box:  $(OBJECTS_box)

@@ -64,17 +64,17 @@ void Dynamical_System_free(Dynamical_System * sys) {
   /*============================================================
     Free system's points in transient regime
   ============================================================*/
-  for(i = 0; i < (sys->transient); i++) {
-    free(sys->transient_points[i]);
-  }
+  //for(i = 0; i < (sys->transient); i++) {
+  //  free(sys->transient_points[i]);
+  //}
   free(sys->transient_points);
 
   /*============================================================
     Free system's points
   ============================================================*/
-  for(i = 0; i < (sys->Npoints); i++) {
-    free(sys->points[i]);
-  }
+  //for(i = 0; i < (sys->Npoints); i++) {
+  //  free(sys->points[i]);
+  //}
   free(sys->points);
 }
 

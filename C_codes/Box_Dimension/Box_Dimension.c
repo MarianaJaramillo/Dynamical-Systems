@@ -127,6 +127,17 @@ int main(int argc, char *argv[]) {
                 max_exponent,
                 "Henon_box_dimension.dat");
 
+  FILE *file=NULL;
+  file = fopen("Henon_points.dat", "w");
+  fprintf(file, "x\ty\n");
+  for(i = 0; i < Npoints; i++) {
+    fprintf(file,
+            "%lf\t%lf\n"
+            , sys.points[i][0], sys.points[i][1]
+    );
+  }
+  fclose(file);
+
   Dynamical_System_free(&sys);
 
   return 0;

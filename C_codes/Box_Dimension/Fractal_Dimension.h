@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 // Library for handling vectors and matrices
-#include "metodos_matrices.h"
+#include "Matrix-Vector_methods.h"
 
 // Library with defined structs
 #include "Dynamical_Systems_Structs.h"
