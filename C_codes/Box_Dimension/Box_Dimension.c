@@ -83,15 +83,15 @@ int main(int argc, char *argv[]) {
   a = 1.4;
   b = 0.3;
   epsilon  = 1.0;
-  max_exponent = 10;
+  max_exponent = 15;
 
   /*============================================================
     Setting out system's constant information
   ============================================================*/
   dimension = 2;
   Nparams = 2;
-  transient = 1000;
-  Npoints = 10000;
+  transient = 1000000;
+  Npoints = 1000000;
 
   /*============================================================
     Alloc memory for Dynamical System
