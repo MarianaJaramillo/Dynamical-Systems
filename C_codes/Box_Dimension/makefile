@@ -67,11 +67,11 @@ GSLFLAGS=-lgsl -lgslcblas
 #============================================================
 #	Box dimension
 #============================================================
-SOURCES_box=Box_Dimension.c Fractal_Dimension.c Dynamical_Systems_Structs.c Matrix-Vector_methods.c
+SOURCES_box=Henon_Box_Dimension.c Fractal_Dimension.c Dynamical_Systems_Structs.c Matrix-Vector_methods.c
 OBJECTS_box=$(SOURCES_box:.c=.o)
 
 box:  $(OBJECTS_box)
-	$(CC) $(OPT) $(LDFLAGS) Box_Dimension.x $(OBJECTS_box) $(GSLFLAGS) $(MATHFLAGS)
+	$(CC) $(OPT) $(LDFLAGS) Henon_Box_Dimension.x $(OBJECTS_box) $(GSLFLAGS) $(MATHFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@

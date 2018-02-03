@@ -48,9 +48,6 @@ void Dynamical_System_alloc(Dynamical_System * sys,
 //============================================================
 
 void Dynamical_System_free(Dynamical_System * sys) {
-  // Method's internal variable
-  int i;
-
   /*============================================================
     Free system's initial points
   ============================================================*/
@@ -64,17 +61,11 @@ void Dynamical_System_free(Dynamical_System * sys) {
   /*============================================================
     Free system's points in transient regime
   ============================================================*/
-  //for(i = 0; i < (sys->transient); i++) {
-  //  free(sys->transient_points[i]);
-  //}
   free(sys->transient_points);
 
   /*============================================================
     Free system's points
   ============================================================*/
-  //for(i = 0; i < (sys->Npoints); i++) {
-  //  free(sys->points[i]);
-  //}
   free(sys->points);
 }
 

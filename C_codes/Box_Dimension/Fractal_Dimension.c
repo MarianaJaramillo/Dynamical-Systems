@@ -18,66 +18,153 @@ double logbase(double y, int b) {
 
 //============================================================
 
-void Box_Dimension(Dynamical_System * sys,
-                  double epsilon,
-                  int max_exponent,
-                  char *filename) {
+void Box_Dimension(const Dynamical_System * sys,
+                  double *sys_Fractal_Dimension,
+                  double *sys_Fractal_Dimension_SD,
+                  const char *filename,
+                  const double epsilon,
+                  const int max_exponent,
+                  const double tolerance_pct,
+                  const int output_option,
+                  const int print_time_option,
+                  const char *time_filename) {
   /*============================================================
+    - *sys_Fractal_Dimension : pointer for System's Fractal Dimension.
+
+    - *sys_Fractal_Dimension_SD : pointer for System's Fractal Dimension
+                                  standard deviation.
+
     - filename: corresponds to output file name.
 
-    - max_exponent:
-    - epsilon:
+                Output format:
+
+                  c1 = Decrease factor
+                      Define the factor decrease according to the exponent
+                      in the power of 2
+
+                      factor_decrease = 2^exponent
+
+                  c2 : Box linear side
+
+                      box_linear_side = epsilon / factor_decrease
+
+                  c3 : Nboxes
+
+                  c4 : exponent
+
+                  c5 : log2(1/box_linear_side)
+
+                  c6 : log2(Nboxes)
+
+                  c7 : contiguous slopes upwards
+
+    - epsilon : grid's initial lenght
+
+    - max_exponent : maximum reduction exponent
+                    Exponents runs from 0 to max_exponent
+
+    - output_option : 0 = without Boxes_Data_Exponent_n.dat output
+                      1 = with Boxes_Data_Exponent_n.dat output
+                      (only works when sys->dimension == 2)
+
+                      x0 =
+                      x1 =
+                      y0 =
+                      y1 =
+
+    - tolerance_pct : tolerance percentage for calculating
+                      system's fractal dimension from contiguous
+                      slopes (upwards)
+
+    - print_time_option : 0 = without Time_data.dat output
+                          1 = with Time_data.dat
+
+                          e = exponent
+                          t = absolute time elapsed in seconds
+                          h = hours elapsed
+                          m = remained minutes elapsed
+                          s = remained seconds elapsed
+
+    - time_filename :
   ============================================================*/
   double asst, l_asst, factor_decrease;
   int i, j, exponent, Npoints, Nboxes, point_detection;
   double **box=NULL, **points=NULL;
+  double *c1=NULL, *c2=NULL;
+  int *c3=NULL, *c4=NULL;
+  double *c5=NULL, *c6=NULL, *c7=NULL;
+  double *selected_slopes=NULL;
+  double diff_up, diff_down;
+  int Nselected_slopes = 0;
+  int any_coincidence = 0;
+  double mean, sd;
+
+  // time variables
+  clock_t start;
+  double execution_time, seconds, minutes, hours;
+  FILE *time_file=NULL;
+
+  /*============================================================
+    Declare output file
+  ============================================================*/
   FILE *file=NULL;
-
-  FILE *boxfile=NULL;
-  char *archivo;
-
   file = fopen(filename,"w");
 
+  /*============================================================
+    Setting up output file
+
+    c1 = Decrease factor
+        Define the factor decrease according to the exponent
+        in the power of 2
+
+        factor_decrease = 2^exponent
+
+    c2 : Box linear side
+
+    c3 : Nboxes
+
+    c4 : Exponent
+
+    c5 : log2(1/box_linear_side)
+
+    c6 : log2(Nboxes)
+
+    c7 : contiguous slopes upwards
+  ============================================================*/
   fprintf(file,
-    "#==================================================\n"
-    "#  Box Dimension - Generated Data \n"
-    "#==================================================\n"
-    "#\n"
-    "# Epsilon used : %g \n"
-    "# Maximum exponent = %d \n"
-    "#\n"
-    "# Remember: \n"
-    "#\n"
-    "#    box_linear_side = epsilon / factor_decrease \n"
-    "#\n"
-    "# So:\n"
-    "#\n"
-    "#    log2(1 / box_linear_side) = log2(2^exponent / epsilon) \n"
-    "#\n"
-    "# So, in units of epsilon: \n"
-    "# \n"
-    "#    box_linear_side [epsilon] = 1.0 / factor_decrease \n"
-    "#\n"
-    "#    logbase_{2}(1 / box_linear_side [epsilon]) \n"
-    "#      = logbase_{2}(1.0 / factor_decrease) \n"
-    "#      = logbase_{2}(2^exponent) = exponent \n"
-    "#\n"
-    "# And also:\n"
-    "#\n"
-    "#  length / box_linear_side = factor_decrease * length / epsilon\n"
-    "#\n"
-    "#         Decrease factor : column 1 \n"
-    "#         Box linear side : column 2 \n"
-    "#                  Nboxes : column 3 \n"
-    "#                Exponent : column 4 \n"
-    "# log2(1/box_linear_side) : column 5 \n"
-    "#            log2(Nboxes) : column 6 \n"
-    "#\n"
-    , epsilon, max_exponent
+          "c1\tc2\tc3\tc4\tc5\tc6\tc7\n"
   );
 
   /*============================================================
-    Asign a memory block for the assistant matrix
+    Declare boxfile
+  ============================================================*/
+  FILE *boxfile=NULL;
+  char *archivo=NULL;
+
+  /*============================================================
+    If print_time_option == 1
+
+    Declare time variables
+
+    Setting up time_file output
+
+      e : exponent
+      t : absolute time elapsed in seconds
+      h : hours elapsed
+      m : remained minutes elapsed
+      s : remained seconds elapsed
+  ============================================================*/
+  if(print_time_option) {
+    // Open output file
+    time_file = fopen(time_filename,"w");
+
+    // Setting up time_file output
+    fprintf(time_file,
+            "e\tt\th\tm\ts\n");
+  }
+
+  /*============================================================
+    Asign a memory block for the assistant matrices
 
       **box: for storing the box's limits
 
@@ -93,6 +180,29 @@ void Box_Dimension(Dynamical_System * sys,
   for(j = 0; j < (sys->Npoints); j++) {
     points[j] = (double *) malloc((size_t) (sys->dimension) * sizeof(double));
   }
+
+  /*============================================================
+    Asign a memory block for the assistant vectors
+
+      *c1: for storing c1
+      *c2: for storing c2
+      *c3: for storing c3 - type int
+      *c4: for storing c4 - type int
+      *c5: for storing c5
+      *c6: for storing c6
+      *c7: for storing c7 ... Since it is only upwards, it has
+                              an element less
+
+      *selected_slopes : for storing selected slopes from c7
+  ============================================================*/
+  c1 = (double *) malloc((size_t) (max_exponent + 1) * sizeof(double));
+  c2 = (double *) malloc((size_t) (max_exponent + 1) * sizeof(double));
+  c3 = (int *) malloc((size_t) (max_exponent + 1) * sizeof(int));
+  c4 = (int *) malloc((size_t) (max_exponent + 1) * sizeof(int));
+  c5 = (double *) malloc((size_t) (max_exponent + 1) * sizeof(double));
+  c6 = (double *) malloc((size_t) (max_exponent + 1) * sizeof(double));
+  c7 = (double *) malloc((size_t) (max_exponent) * sizeof(double));
+  selected_slopes = (double *) malloc((size_t) 1 * sizeof(double));
 
   /*============================================================
     Copy sys->points to **points
@@ -123,7 +233,7 @@ void Box_Dimension(Dynamical_System * sys,
 
         logbase_{2}(1 / box_linear_side [epsilon])
           = logbase_{2}(1.0 / factor_decrease)
-          = logbase_{2}(2^exponent) = exponent
+          = logbase_{2}(2^exponent) = exponentb
 
       And also:
 
@@ -132,21 +242,32 @@ void Box_Dimension(Dynamical_System * sys,
     factor_decrease = pow(2.0, (double) exponent);
 
     /*============================================================
+      If print_time_option == 1
+      Initialize execution time meassurement
+    ============================================================*/
+    if(print_time_option) {
+      start=clock();
+    }
+
+    /*============================================================
       Initialize Nboxes
     ============================================================*/
     Nboxes = 0;
 
     /*=========================================================
-      %%%% PARA IMPRIMIR CAJAS
+      If output_option == 1
+      Setting up boxfile
     =========================================================*/
-    sprintf(archivo,
-      "Boxes_Exponent_%d.dat"
-      , exponent
-    );
-    boxfile = fopen(archivo,"w");
+    if(sys->dimension == 2 && output_option) {
+      sprintf(archivo,
+        "Boxes_Data_Exponent_%d.dat"
+        , exponent
+      );
+      boxfile = fopen(archivo,"w");
 
-    fprintf(boxfile,
-            "x0\tx1\ty0\ty1\n");
+      fprintf(boxfile,
+              "x0\tx1\ty0\ty1\n");
+    }
 
     /*============================================================
       Cycle for counting Nboxes
@@ -162,11 +283,16 @@ void Box_Dimension(Dynamical_System * sys,
         box[j][1] = epsilon/factor_decrease * (floor(l_asst) + 1.0);
       }
 
-      //##################################
-      fprintf(boxfile,
-              "%lf\t%lf\t%lf\t%lf\n"
-              , box[0][0], box[0][1], box[1][0], box[1][1]
-            );
+      /*=========================================================
+        If output_option == 1
+        Print in boxfile
+      =========================================================*/
+      if(sys->dimension == 2 && output_option) {
+        fprintf(boxfile,
+                "%lf\t%lf\t%lf\t%lf\n"
+                , box[0][0], box[0][1], box[1][0], box[1][1]
+              );
+      }
 
       /*============================================================
         Increment number of boxes
@@ -237,34 +363,155 @@ void Box_Dimension(Dynamical_System * sys,
         }
       }
     }
-    //################
-    fclose(boxfile);
+    /*=========================================================
+      If output_option == 1
+      Close boxfile
+    =========================================================*/
+    if(sys->dimension == 2 && output_option) {
+      fclose(boxfile);
+    }
 
-    fprintf(file,
-            "%g\t%g\t%d\t%d\t%.16g\t%.16g\n"
-            , factor_decrease, epsilon/factor_decrease, Nboxes, exponent
-            , logbase(factor_decrease/epsilon, 2.0)
-            , logbase((double) Nboxes, 2.0));
+    /*=========================================================
+      Save data
+    =========================================================*/
+    c1[exponent] = factor_decrease;
+    c2[exponent] = epsilon/factor_decrease;
+    c3[exponent] = Nboxes;
+    c4[exponent] = exponent;
+    c5[exponent] = logbase(factor_decrease/epsilon, 2.0);
+    c6[exponent] = logbase((double) Nboxes, 2.0);
+    if(exponent > 1) {
+      c7[exponent - 1] = (c6[exponent] - c6[exponent - 1])
+                                        /(c5[exponent] - c5[exponent - 1]);
+    }
+
+    /*============================================================
+      If print_time_option == 1
+      Print in time_file the execution time
+
+      e : exponent
+      t : absolute time elapsed in seconds
+      h : hours elapsed
+      m : remained minutes elapsed
+      s : remained seconds elapsed
+    ============================================================*/
+    if(print_time_option) {
+      execution_time = ((double) (clock() - start))/(double)CLOCKS_PER_SEC;
+      hours = floor(execution_time/3600.);
+      minutes = floor( ( (execution_time/3600.) - hours) * 60.0 );
+      seconds = ( (seconds/60.) - minutes ) * 60.0;
+
+      fprintf(time_file,
+              "%d\t%.16g\t%lf\t%lf\t%lf\n"
+              , exponent, execution_time, hours, minutes, seconds
+      );
+    }
   }
+
+  /*=========================================================
+    Print data in file
+  =========================================================*/
+  for(exponent = 0; exponent <= max_exponent; exponent++){
+    if(exponent == 0) {
+      fprintf(file,
+            "%g\t%g\t%d\t%d\t%.16g\t%.16g\n"
+            , c1[exponent], c2[exponent], c3[exponent], c4[exponent]
+            , c5[exponent], c6[exponent]
+      );
+    }
+    else {
+      fprintf(file,
+              "%g\t%g\t%d\t%d\t%.16g\t%.16g\t%.16g\n"
+              , c1[exponent], c2[exponent], c3[exponent], c4[exponent]
+              , c5[exponent], c6[exponent], c7[exponent - 1]
+      );
+    }
+  }
+
+  /*============================================================
+    Calculate final_slope
+    First two points and last point are eliminated
+  ============================================================*/
+  for(i = 2; i < (max_exponent - 1); i++) {
+
+    diff_down = fabs(c7[i] - c7[i - 1])
+              /c7[i];
+
+    diff_up = fabs(c7[i] - c7[i + 1])
+              /c7[i];
+
+    if(diff_down < tolerance_pct && diff_up < tolerance_pct) {
+      if(Nselected_slopes == 0) {
+        any_coincidence = 1;
+        Nselected_slopes += 2;
+        selected_slopes = (double *) realloc(selected_slopes, Nselected_slopes);
+        selected_slopes[0] = c7[i - 1];
+        selected_slopes[1] = c7[i];
+
+      }
+      else {
+        selected_slopes = (double *) realloc(selected_slopes, Nselected_slopes + 1);
+        selected_slopes[Nselected_slopes] = c7[i];
+        Nselected_slopes++;
+      }
+    }
+    else {
+      if(any_coincidence) {
+        any_coincidence = 0;
+        selected_slopes = (double *) realloc(selected_slopes, Nselected_slopes + 1);
+        selected_slopes[Nselected_slopes] = c7[i];
+        Nselected_slopes++;
+      }
+    }
+  }
+
+  /*============================================================
+    Calculate system's fractal dimension (and its standard
+    deviation) as the mean of the selected slopes (and its
+    standard deviation) using GSL library for statistics
+  ============================================================*/
+  mean = gsl_stats_mean(selected_slopes, 1, Nselected_slopes);
+  sd = gsl_stats_sd_m(selected_slopes, 1, Nselected_slopes, mean);
+
+  *sys_Fractal_Dimension = mean;
+  *sys_Fractal_Dimension_SD = sd;
 
   /*============================================================
     Free **points
-  ============================================================*/
-  for(i = 0; i < (sys->Npoints); i++) {
-    free(points[i]);
-  }
-  free(points);
-
-  /*============================================================
     Free **box
   ============================================================*/
-  //for(i = 0; i < 2; i++) {
-  //  free(box[i]);
-  //}
+  free(points);
   free(box);
+
+  /*============================================================
+    Free *c1
+    Free *c2
+    Free *c3
+    Free *c4
+    Free *c5
+    Free *c6
+    Free *c7
+    Free *selected_slopes
+  ============================================================*/
+  free(c1);
+  free(c2);
+  free(c3);
+  free(c4);
+  free(c5);
+  free(c6);
+  free(c7);
+  free(selected_slopes);
 
   /*============================================================
     Close file
   ============================================================*/
   fclose(file);
+
+  /*============================================================
+    If print_time_option == 1
+    Close time_file
+  ============================================================*/
+  if(print_time_option) {
+    fclose(time_file);
+  }
 }

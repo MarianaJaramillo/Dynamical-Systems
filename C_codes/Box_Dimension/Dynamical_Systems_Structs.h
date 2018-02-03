@@ -1,8 +1,8 @@
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <unistd.h>
+#include <math.h>
+#include <time.h>
 
 /*************************************************************
   Define structs
