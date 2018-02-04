@@ -8,9 +8,9 @@ C_codes/Lyapunov_exponents.o
 C_codes/Lyapunov_exponents.x
 C_codes/lyapunov.dat
 C_codes/metodos_matrices.o
-C_codes/Box_Dimension/.ipynb_checkpoints/
-C_codes/Box_Dimension/Henon_Box_Dimension.o
-C_codes/Box_Dimension/Henon_Box_Dimension.x
-C_codes/Box_Dimension/Dynamical_Systems_Structs.o
-C_codes/Box_Dimension/Fractal_Dimension.o
-C_codes/Box_Dimension/Matrix-Vector_methods.o
+C_codes/Prototyping_Fractal_Dimension.ipynb_checkpoints/
+C_codes/Prototyping_Fractal_DimensionHenon_Box_Dimension.o
+C_codes/Prototyping_Fractal_DimensionHenon_Box_Dimension.x
+C_codes/Prototyping_Fractal_DimensionDynamical_Systems_Structs.o
+C_codes/Prototyping_Fractal_DimensionFractal_Dimension.o
+C_codes/Prototyping_Fractal_DimensionMatrix-Vector_methods.o
