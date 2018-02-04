@@ -139,7 +139,7 @@ void Box_Dimension(const Dynamical_System * sys,
     Declare boxfile
   ============================================================*/
   FILE *boxfile=NULL;
-  char *archivo=NULL;
+  char archivo[100];
 
   /*============================================================
     If print_time_option == 1
@@ -202,7 +202,7 @@ void Box_Dimension(const Dynamical_System * sys,
   c5 = (double *) malloc((size_t) (max_exponent + 1) * sizeof(double));
   c6 = (double *) malloc((size_t) (max_exponent + 1) * sizeof(double));
   c7 = (double *) malloc((size_t) (max_exponent) * sizeof(double));
-  selected_slopes = (double *) malloc((size_t) 1 * sizeof(double));
+  selected_slopes = (double *) malloc((size_t) (max_exponent) * sizeof(double));
 
   /*============================================================
     Copy sys->points to **points
@@ -380,7 +380,7 @@ void Box_Dimension(const Dynamical_System * sys,
     c4[exponent] = exponent;
     c5[exponent] = logbase(factor_decrease/epsilon, 2.0);
     c6[exponent] = logbase((double) Nboxes, 2.0);
-    if(exponent > 1) {
+    if(exponent > 0) {
       c7[exponent - 1] = (c6[exponent] - c6[exponent - 1])
                                         /(c5[exponent] - c5[exponent - 1]);
     }
@@ -399,7 +399,7 @@ void Box_Dimension(const Dynamical_System * sys,
       execution_time = ((double) (clock() - start))/(double)CLOCKS_PER_SEC;
       hours = floor(execution_time/3600.);
       minutes = floor( ( (execution_time/3600.) - hours) * 60.0 );
-      seconds = ( (seconds/60.) - minutes ) * 60.0;
+      seconds = ( (execution_time/60.) - minutes ) * 60.0;
 
       fprintf(time_file,
               "%d\t%.16g\t%lf\t%lf\t%lf\n"
@@ -444,13 +444,11 @@ void Box_Dimension(const Dynamical_System * sys,
       if(Nselected_slopes == 0) {
         any_coincidence = 1;
         Nselected_slopes += 2;
-        selected_slopes = (double *) realloc(selected_slopes, Nselected_slopes);
         selected_slopes[0] = c7[i - 1];
         selected_slopes[1] = c7[i];
 
       }
       else {
-        selected_slopes = (double *) realloc(selected_slopes, Nselected_slopes + 1);
         selected_slopes[Nselected_slopes] = c7[i];
         Nselected_slopes++;
       }
@@ -458,7 +456,6 @@ void Box_Dimension(const Dynamical_System * sys,
     else {
       if(any_coincidence) {
         any_coincidence = 0;
-        selected_slopes = (double *) realloc(selected_slopes, Nselected_slopes + 1);
         selected_slopes[Nselected_slopes] = c7[i];
         Nselected_slopes++;
       }
