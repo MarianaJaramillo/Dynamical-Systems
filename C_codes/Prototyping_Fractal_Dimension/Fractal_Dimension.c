@@ -25,9 +25,10 @@ void Box_Dimension(const Dynamical_System * sys,
                   const double epsilon,
                   const int max_exponent,
                   const double tolerance_pct,
-                  const int output_option,
-                  const int print_time_option,
-                  const char *time_filename) {
+                  const char *output_option,
+                  const char *print_time_option,
+                  const char *time_filename,
+                  const char *method) {
   /*============================================================
     - *sys_Fractal_Dimension : pointer for System's Fractal Dimension.
 
@@ -63,8 +64,8 @@ void Box_Dimension(const Dynamical_System * sys,
     - max_exponent : maximum reduction exponent
                     Exponents runs from 0 to max_exponent
 
-    - output_option : 0 = without Boxes_Data_Exponent_n.dat output
-                      1 = with Boxes_Data_Exponent_n.dat output
+    - output_option : 'false' = without Boxes_Data_Exponent_n.dat output (default)
+                      'true' = with Boxes_Data_Exponent_n.dat output
                       (only works when sys->dimension == 2)
 
                       x0 =
@@ -76,8 +77,8 @@ void Box_Dimension(const Dynamical_System * sys,
                       system's fractal dimension from contiguous
                       slopes (upwards)
 
-    - print_time_option : 0 = without Time_data.dat output
-                          1 = with Time_data.dat
+    - print_time_option : 'false' = without Time_data.dat output (default)
+                          'true' = with Time_data.dat
 
                           e = exponent
                           t = absolute time elapsed in seconds
@@ -86,9 +87,17 @@ void Box_Dimension(const Dynamical_System * sys,
                           s = remained seconds elapsed
 
     - time_filename :
+
+    - method : 'standard' (default)
+               'standard_improved'
+               'CHmethod'
   ============================================================*/
   double asst, l_asst, factor_decrease;
-  int i, j, exponent, Npoints, Nboxes, point_detection;
+  int i, j, ix, iy, exponent, Npoints, Nboxes, point_detection;
+  size_t *sorted_indexes=NULL;
+  double **bounds=NULL;
+  int **integer_steps_of_bounds=NULL;
+  double ***boxes=NULL;
   double **box=NULL, **points=NULL;
   double *c1=NULL, *c2=NULL;
   int *c3=NULL, *c4=NULL;
@@ -142,7 +151,7 @@ void Box_Dimension(const Dynamical_System * sys,
   char archivo[100];
 
   /*============================================================
-    If print_time_option == 1
+    If print_time_option == 'true'
 
     Declare time variables
 
@@ -154,31 +163,18 @@ void Box_Dimension(const Dynamical_System * sys,
       m : remained minutes elapsed
       s : remained seconds elapsed
   ============================================================*/
-  if(print_time_option) {
-    // Open output file
-    time_file = fopen(time_filename,"w");
+  switch(print_time_option) {
+    case 'true' :
+      // Open output file
+      time_file = fopen(time_filename,"w");
 
-    // Setting up time_file output
-    fprintf(time_file,
-            "e\tt\th\tm\ts\n");
-  }
-
-  /*============================================================
-    Asign a memory block for the assistant matrices
-
-      **box: for storing the box's limits
-
-      **points: for storing system's points and avoiding
-                to modify it
-  ============================================================*/
-  box = (double **) malloc((size_t) (sys->dimension) * sizeof(double*));
-  for(j = 0; j < (sys->dimension); j++) {
-    box[j] = (double *) malloc((size_t) 2 * sizeof(double));
-  }
-
-  points = (double **) malloc((size_t) (sys->Npoints) * sizeof(double*));
-  for(j = 0; j < (sys->Npoints); j++) {
-    points[j] = (double *) malloc((size_t) (sys->dimension) * sizeof(double));
+      // Setting up time_file output
+      fprintf(time_file,
+              "e\tt\th\tm\ts\n");
+      break;
+    default :
+      // print_time_option == 'false'
+      break;
   }
 
   /*============================================================
@@ -205,6 +201,17 @@ void Box_Dimension(const Dynamical_System * sys,
   selected_slopes = (double *) malloc((size_t) (max_exponent) * sizeof(double));
 
   /*============================================================
+    Asign a memory block for the assistant matrix
+
+      **points: for storing system's points and avoiding
+                to modify it
+  ============================================================*/
+  points = (double **) malloc((size_t) (sys->Npoints) * sizeof(double*));
+  for(j = 0; j < (sys->Npoints); j++) {
+    points[j] = (double *) malloc((size_t) (sys->dimension) * sizeof(double));
+  }
+
+  /*============================================================
     Copy sys->points to **points
   ============================================================*/
   Matrix_copy(sys->points,
@@ -212,200 +219,524 @@ void Box_Dimension(const Dynamical_System * sys,
               sys->Npoints,
               sys->dimension);
 
-  for(exponent = 0; exponent <= max_exponent; exponent++){
-    /*============================================================
-      Define the factor decrease according to the exponent in the
-      power of 2
+  switch (method) {
+    case 'standard_improved' :
+      break;
+    case 'CHmethod' :
+      /*============================================================
+        Asign a memory block for the assistant matrix
 
-        factor_decrease = 2^exponent
+          **box: for storing the box's limits
+      ============================================================*/
+      box = (double **) malloc((size_t) (sys->dimension) * sizeof(double*));
+      for(j = 0; j < (sys->dimension); j++) {
+        box[j] = (double *) malloc((size_t) 2 * sizeof(double));
+      }
 
-      Remember:
-
-        box_linear_side = epsilon / factor_decrease
-
-      So:
-
-        logbase_{2}(1 / box_linear_side) = logbase_{2}(2^exponent / epsilon)
-
-      So, in units of epsilon:
-
-        box_linear_side [epsilon] = 1.0 / factor_decrease
-
-        logbase_{2}(1 / box_linear_side [epsilon])
-          = logbase_{2}(1.0 / factor_decrease)
-          = logbase_{2}(2^exponent) = exponentb
-
-      And also:
-
-        length / box_linear_side = factor_decrease * length / epsilon
-    ============================================================*/
-    factor_decrease = pow(2.0, (double) exponent);
-
-    /*============================================================
-      If print_time_option == 1
-      Initialize execution time meassurement
-    ============================================================*/
-    if(print_time_option) {
-      start=clock();
-    }
-
-    /*============================================================
-      Initialize Nboxes
-    ============================================================*/
-    Nboxes = 0;
-
-    /*=========================================================
-      If output_option == 1
-      Setting up boxfile
-    =========================================================*/
-    if(sys->dimension == 2 && output_option) {
-      sprintf(archivo,
-        "Boxes_Data_Exponent_%d.dat"
-        , exponent
-      );
-      boxfile = fopen(archivo,"w");
-
-      fprintf(boxfile,
-              "x0\tx1\ty0\ty1\n");
-    }
-
-    /*============================================================
-      Cycle for counting Nboxes
-    ============================================================*/
-    Npoints = sys->Npoints;
-    while(Npoints > 0) {
-      for(j = 0; j < sys->dimension; j++) {
+      for(exponent = 0; exponent <= max_exponent; exponent++){
         /*============================================================
-          Take the first point and define box's limits
+          Define the factor decrease according to the exponent in the
+          power of 2
+
+            factor_decrease = 2^exponent
+
+          Remember:
+
+            box_linear_side = epsilon / factor_decrease
+
+          So:
+
+            logbase_{2}(1 / box_linear_side) = logbase_{2}(2^exponent / epsilon)
+
+          So, in units of epsilon:
+
+            box_linear_side [epsilon] = 1.0 / factor_decrease
+
+            logbase_{2}(1 / box_linear_side [epsilon])
+              = logbase_{2}(1.0 / factor_decrease)
+              = logbase_{2}(2^exponent) = exponentb
+
+          And also:
+
+            length / box_linear_side = factor_decrease * length / epsilon
         ============================================================*/
-        l_asst = factor_decrease * points[0][j] /epsilon;
-        box[j][0] = floor(l_asst) * epsilon/factor_decrease;
-        box[j][1] = epsilon/factor_decrease * (floor(l_asst) + 1.0);
-      }
+        factor_decrease = pow(2.0, (double) exponent);
 
-      /*=========================================================
-        If output_option == 1
-        Print in boxfile
-      =========================================================*/
-      if(sys->dimension == 2 && output_option) {
-        fprintf(boxfile,
-                "%lf\t%lf\t%lf\t%lf\n"
-                , box[0][0], box[0][1], box[1][0], box[1][1]
+        /*============================================================
+          If print_time_option == 'true'
+          Initialize execution time meassurement
+        ============================================================*/
+        switch(print_time_option) {
+          case 'true' :
+            start=clock();
+            break;
+          default :
+            break;
+        }
+
+        /*============================================================
+          Initialize Nboxes
+        ============================================================*/
+        Nboxes = 0;
+
+        /*=========================================================
+          If output_option == 'true'
+          Setting up boxfile
+        =========================================================*/
+        switch(output_option) {
+          case 'true':
+            if(sys->dimension == 2) {
+              sprintf(archivo,
+                "Boxes_Data_Exponent_%d.dat"
+                , exponent
               );
-      }
+              boxfile = fopen(archivo,"w");
 
-      /*============================================================
-        Increment number of boxes
-      ============================================================*/
-      Nboxes++;
-
-      /*============================================================
-        Obviously, the first point belongs to that box, so we move
-        this point to the last position of the array of points
-      ============================================================*/
-      for(j = 0; j < sys->dimension; j++){
-        asst = points[0][j];
-        points[0][j] = points[Npoints - 1][j];
-        points[Npoints - 1][j] = asst;
-      }
-
-      /*============================================================
-        Decrease number of points
-      ============================================================*/
-      Npoints--;
-
-      if (Npoints > 0) {
-        for(i = 0; i < Npoints; i++) {
-          /*============================================================
-            Detect if the i-th point belongs to the box
-
-            For every component j of the point, it must hold:
-
-              box[j][0] <= points[i][j] < box[j][1]
-
-            The opposite is:
-
-              points[i][j] < box[j][0] OR box[j][1] <= points[i][j]
-          ============================================================*/
-          point_detection = 1;
-
-          for(j = 0; j < sys->dimension; j++){
-            if(points[i][j] < box[j][0] || box[j][1] <= points[i][j]){
-              point_detection = 0;
-              break;
+              fprintf(boxfile,
+                      "x0\tx1\ty0\ty1\n");
             }
+            break;
+          default :
+            // output_option == 'false'
+            break;
+        }
+
+        /*============================================================
+          Cycle for counting Nboxes
+        ============================================================*/
+        Npoints = sys->Npoints;
+        while(Npoints > 0) {
+          for(j = 0; j < sys->dimension; j++) {
+            /*============================================================
+              Take the first point and define box's limits
+            ============================================================*/
+            l_asst = factor_decrease * points[0][j] /epsilon;
+            box[j][0] = floor(l_asst) * epsilon/factor_decrease;
+            box[j][1] = epsilon/factor_decrease * (floor(l_asst) + 1.0);
           }
 
-          if(point_detection){
-            /*============================================================
-              point_detection == 1
+          /*=========================================================
+            If output_option == 'true'
+            Print in boxfile
+          =========================================================*/
+          switch(output_option) {
+            case 'true':
+              if(sys->dimension == 2) {
+                fprintf(boxfile,
+                        "%lf\t%lf\t%lf\t%lf\n"
+                        , box[0][0], box[0][1], box[1][0], box[1][1]
+                );
+              }
+              break;
+              default :
+              // output_option == 'false'
+                break;
+          }
 
-              Then the point i belongs to the box. So we move
-              this point to the last position of the array of points
-            ============================================================*/
-            for(j = 0; j < sys->dimension; j++){
-              asst = points[i][j];
-              points[i][j] = points[Npoints - 1][j];
-              points[Npoints - 1][j] = asst;
+          /*============================================================
+            Increment number of boxes
+          ============================================================*/
+          Nboxes++;
+
+          /*============================================================
+            Obviously, the first point belongs to that box, so we move
+            this point to the last position of the array of points
+          ============================================================*/
+          for(j = 0; j < sys->dimension; j++){
+            asst = points[0][j];
+            points[0][j] = points[Npoints - 1][j];
+            points[Npoints - 1][j] = asst;
+          }
+
+          /*============================================================
+            Decrease number of points
+          ============================================================*/
+          Npoints--;
+
+          if (Npoints > 0) {
+            for(i = 0; i < Npoints; i++) {
+              /*============================================================
+                Detect if the i-th point belongs to the box
+
+                For every component j of the point, it must hold:
+
+                  box[j][0] <= points[i][j] < box[j][1]
+
+                The opposite is:
+
+                  points[i][j] < box[j][0] OR box[j][1] <= points[i][j]
+              ============================================================*/
+              point_detection = 1;
+
+              for(j = 0; j < sys->dimension; j++){
+                if(points[i][j] < box[j][0] || box[j][1] <= points[i][j]){
+                  point_detection = 0;
+                  break;
+                }
+              }
+
+              if(point_detection){
+                /*============================================================
+                  point_detection == 1
+
+                  Then the point i belongs to the box. So we move
+                  this point to the last position of the array of points
+                ============================================================*/
+                for(j = 0; j < sys->dimension; j++){
+                  asst = points[i][j];
+                  points[i][j] = points[Npoints - 1][j];
+                  points[Npoints - 1][j] = asst;
+                }
+
+                /*============================================================
+                  Decrease number of points
+                ============================================================*/
+                Npoints--;
+
+                /*============================================================
+                  Decrease counter i thus allowing to repeat evaluation for
+                  the new i-th point
+                ============================================================*/
+                i--;
+              }
             }
-
-            /*============================================================
-              Decrease number of points
-            ============================================================*/
-            Npoints--;
-
-            /*============================================================
-              Decrease counter i thus allowing to repeat evaluation for
-              the new i-th point
-            ============================================================*/
-            i--;
           }
         }
+        /*=========================================================
+          If output_option == 'true'
+          Close boxfile
+        =========================================================*/
+        switch(output_option) {
+          case 'true':
+            if(sys->dimension == 2) {
+              fclose(boxfile);
+            }
+            break;
+          default :
+            // output_option == 'false'
+            break;
+        }
+
+        /*=========================================================
+          Save data
+        =========================================================*/
+        c1[exponent] = factor_decrease;
+        c2[exponent] = epsilon/factor_decrease;
+        c3[exponent] = Nboxes;
+        c4[exponent] = exponent;
+        c5[exponent] = logbase(factor_decrease/epsilon, 2.0);
+        c6[exponent] = logbase((double) Nboxes, 2.0);
+        if(exponent > 0) {
+          c7[exponent - 1] = (c6[exponent] - c6[exponent - 1])
+                                          /(c5[exponent] - c5[exponent - 1]);
+        }
+
+        /*============================================================
+          If print_time_option == 1
+          Print in time_file the execution time
+
+          e : exponent
+          t : absolute time elapsed in seconds
+          h : hours elapsed
+          m : remained minutes elapsed
+          s : remained seconds elapsed
+        ============================================================*/
+        switch(print_time_option) {
+          case 'true' :
+            execution_time = ((double) (clock() - start))/(double)CLOCKS_PER_SEC;
+            hours = floor(execution_time/3600.);
+            minutes = floor( ( (execution_time/3600.) - hours) * 60.0 );
+            seconds = ( (execution_time/60.) - minutes ) * 60.0;
+
+            fprintf(time_file,
+                    "%d\t%.16g\t%lf\t%lf\t%lf\n"
+                    , exponent, execution_time, hours, minutes, seconds
+            );
+          default :
+            break;
+        }
       }
-    }
-    /*=========================================================
-      If output_option == 1
-      Close boxfile
-    =========================================================*/
-    if(sys->dimension == 2 && output_option) {
-      fclose(boxfile);
-    }
+      break;
+    default :
+      // method == 'standard'
+      Npoints = sys->Npoints;
 
-    /*=========================================================
-      Save data
-    =========================================================*/
-    c1[exponent] = factor_decrease;
-    c2[exponent] = epsilon/factor_decrease;
-    c3[exponent] = Nboxes;
-    c4[exponent] = exponent;
-    c5[exponent] = logbase(factor_decrease/epsilon, 2.0);
-    c6[exponent] = logbase((double) Nboxes, 2.0);
-    if(exponent > 0) {
-      c7[exponent - 1] = (c6[exponent] - c6[exponent - 1])
-                                        /(c5[exponent] - c5[exponent - 1]);
-    }
+      /*============================================================
+        Asign a memory block for the assistant matrices
 
-    /*============================================================
-      If print_time_option == 1
-      Print in time_file the execution time
+          **bounds: for storing the bounds
 
-      e : exponent
-      t : absolute time elapsed in seconds
-      h : hours elapsed
-      m : remained minutes elapsed
-      s : remained seconds elapsed
-    ============================================================*/
-    if(print_time_option) {
-      execution_time = ((double) (clock() - start))/(double)CLOCKS_PER_SEC;
-      hours = floor(execution_time/3600.);
-      minutes = floor( ( (execution_time/3600.) - hours) * 60.0 );
-      seconds = ( (execution_time/60.) - minutes ) * 60.0;
+          **integer_steps_of_bounds: for storing the integer
+                                    steps of the bounds in terms
+                                    of the box_linear_side
+      ============================================================*/
+      bounds = (double **) malloc((size_t) (sys->dimension) * sizeof(double *));
+      for(j = 0; j < (sys->dimension); j++) {
+        bounds[j] = (double *) malloc((size_t) 2 * sizeof(double));
+      }
 
-      fprintf(time_file,
-              "%d\t%.16g\t%lf\t%lf\t%lf\n"
-              , exponent, execution_time, hours, minutes, seconds
-      );
-    }
+      integer_steps_of_bounds = (int **) malloc((size_t) (sys->dimension) * sizeof(int *));
+      for(j = 0; j < (sys->dimension); j++) {
+        integer_steps_of_bounds[j] = (int *) malloc((size_t) 2 * sizeof(int));
+      }
+
+      /*============================================================
+        Asign a memory block for the assistant vector
+
+          **sorted_indexes: for storing the sorted indexes
+      ============================================================*/
+      sorted_indexes = (size_t *) malloc((size_t) (sys->Npoints) * sizeof(size_t));
+
+      /*============================================================
+        Finding bounds with GSL
+      ============================================================*/
+      gsl_sort_index(sorted_indexes, points, 1, Npoints);
+
+      for(j = 0; j < (sys->dimension); j++) {
+        bounds[j][0] = points[sorted_indexes[0]][j];
+        bounds[j][1] = points[sorted_indexes[Npoints - 1]][j];
+      }
+
+      /*============================================================
+        Asign a memory block for the assistant matrix
+
+          **box: for storing the box's limits
+      ============================================================*/
+      box = (double **) malloc((size_t) (sys->dimension) * sizeof(double*));
+      for(j = 0; j < (sys->dimension); j++) {
+        box[j] = (double *) malloc((size_t) 2 * sizeof(double));
+      }
+
+      for(exponent = 0; exponent <= max_exponent; exponent++){
+        /*============================================================
+          Define the factor decrease according to the exponent in the
+          power of 2
+
+            factor_decrease = 2^exponent
+
+          Remember:
+
+            box_linear_side = epsilon / factor_decrease
+
+          So:
+
+            logbase_{2}(1 / box_linear_side) = logbase_{2}(2^exponent / epsilon)
+
+          So, in units of epsilon:
+
+            box_linear_side [epsilon] = 1.0 / factor_decrease
+
+            logbase_{2}(1 / box_linear_side [epsilon])
+              = logbase_{2}(1.0 / factor_decrease)
+              = logbase_{2}(2^exponent) = exponentb
+
+          And also:
+
+            length / box_linear_side = factor_decrease * length / epsilon
+        ============================================================*/
+        factor_decrease = pow(2.0, (double) exponent);
+
+        /*============================================================
+          If print_time_option == 1
+          Initialize execution time meassurement
+        ============================================================*/
+        if(print_time_option) {
+          start=clock();
+        }
+
+        /*============================================================
+          Initialize Nboxes
+        ============================================================*/
+        Nboxes = 0;
+
+        /*=========================================================
+          If output_option == 'true'
+          Setting up boxfile
+        =========================================================*/
+        switch(output_option) {
+          case 'true':
+            if(sys->dimension == 2) {
+              sprintf(archivo,
+                "Boxes_Data_Exponent_%d.dat"
+                , exponent
+              );
+              boxfile = fopen(archivo,"w");
+
+              fprintf(boxfile,
+                      "x0\tx1\ty0\ty1\n");
+            }
+            break;
+          default :
+            // output_option == 'false'
+            break;
+        }
+
+        /*============================================================
+          Finding integer steps of bounds in terms of the box linear
+          side
+        ============================================================*/
+        for(j = 0; j < (sys->dimension); j++) {
+          integer_steps_of_bounds[j][0] =
+                  floor(factor_decrease * bounds[j][0] /epsilon);
+          integer_steps_of_bounds[j][1] =
+                  ceil(factor_decrease * bounds[j][1] /epsilon);
+        }
+
+        /*============================================================
+          Cycle for counting Nboxes
+        ============================================================*/
+        for(ix = ; ) {
+          for(j = 0; j < sys->dimension; j++) {
+            /*============================================================
+              Take the first point and define box's limits
+            ============================================================*/
+            l_asst = factor_decrease * points[0][j] /epsilon;
+            box[j][0] = floor(l_asst) * epsilon/factor_decrease;
+            box[j][1] = epsilon/factor_decrease * (floor(l_asst) + 1.0);
+          }
+
+          /*=========================================================
+            If output_option == 'true'
+            Print in boxfile
+          =========================================================*/
+          switch(output_option) {
+            case 'true':
+              if(sys->dimension == 2) {
+                fprintf(boxfile,
+                        "%lf\t%lf\t%lf\t%lf\n"
+                        , box[0][0], box[0][1], box[1][0], box[1][1]
+                      );
+              }
+              break;
+            default :
+              // output_option == 'false'
+          }
+
+          /*============================================================
+            Increment number of boxes
+          ============================================================*/
+          Nboxes++;
+
+          /*============================================================
+            Obviously, the first point belongs to that box, so we move
+            this point to the last position of the array of points
+          ============================================================*/
+          for(j = 0; j < sys->dimension; j++){
+            asst = points[0][j];
+            points[0][j] = points[Npoints - 1][j];
+            points[Npoints - 1][j] = asst;
+          }
+
+          /*============================================================
+            Decrease number of points
+          ============================================================*/
+          Npoints--;
+
+          if (Npoints > 0) {
+            for(i = 0; i < Npoints; i++) {
+              /*============================================================
+                Detect if the i-th point belongs to the box
+
+                For every component j of the point, it must hold:
+
+                  box[j][0] <= points[i][j] < box[j][1]
+
+                The opposite is:
+
+                  points[i][j] < box[j][0] OR box[j][1] <= points[i][j]
+              ============================================================*/
+              point_detection = 1;
+
+              for(j = 0; j < sys->dimension; j++){
+                if(points[i][j] < box[j][0] || box[j][1] <= points[i][j]){
+                  point_detection = 0;
+                  break;
+                }
+              }
+
+              if(point_detection){
+                /*============================================================
+                  point_detection == 1
+
+                  Then the point i belongs to the box. So we move
+                  this point to the last position of the array of points
+                ============================================================*/
+                for(j = 0; j < sys->dimension; j++){
+                  asst = points[i][j];
+                  points[i][j] = points[Npoints - 1][j];
+                  points[Npoints - 1][j] = asst;
+                }
+
+                /*============================================================
+                  Decrease number of points
+                ============================================================*/
+                Npoints--;
+
+                /*============================================================
+                  Decrease counter i thus allowing to repeat evaluation for
+                  the new i-th point
+                ============================================================*/
+                i--;
+              }
+            }
+          }
+        }
+        /*=========================================================
+          If output_option == 'true'
+          Close boxfile
+        =========================================================*/
+        switch(output_option) {
+          case 'true':
+            if(sys->dimension == 2) {
+              fclose(boxfile);
+            }
+            break;
+          default :
+            // output_option == 'false'
+            break;
+        }
+
+        /*=========================================================
+          Save data
+        =========================================================*/
+        c1[exponent] = factor_decrease;
+        c2[exponent] = epsilon/factor_decrease;
+        c3[exponent] = Nboxes;
+        c4[exponent] = exponent;
+        c5[exponent] = logbase(factor_decrease/epsilon, 2.0);
+        c6[exponent] = logbase((double) Nboxes, 2.0);
+        if(exponent > 0) {
+          c7[exponent - 1] = (c6[exponent] - c6[exponent - 1])
+                                            /(c5[exponent] - c5[exponent - 1]);
+        }
+
+        /*============================================================
+          If print_time_option == 1
+          Print in time_file the execution time
+
+          e : exponent
+          t : absolute time elapsed in seconds
+          h : hours elapsed
+          m : remained minutes elapsed
+          s : remained seconds elapsed
+        ============================================================*/
+        switch(print_time_option) {
+          case 'true' :
+            execution_time = ((double) (clock() - start))/(double)CLOCKS_PER_SEC;
+            hours = floor(execution_time/3600.);
+            minutes = floor( ( (execution_time/3600.) - hours) * 60.0 );
+            seconds = ( (execution_time/60.) - minutes ) * 60.0;
+
+            fprintf(time_file,
+                    "%d\t%.16g\t%lf\t%lf\t%lf\n"
+                    , exponent, execution_time, hours, minutes, seconds
+            );
+          default :
+            break;
+        }
+      }
+
+      break;
   }
 
   /*=========================================================
@@ -508,7 +839,12 @@ void Box_Dimension(const Dynamical_System * sys,
     If print_time_option == 1
     Close time_file
   ============================================================*/
-  if(print_time_option) {
-    fclose(time_file);
+  switch() {
+    case 'true':
+      fclose(time_file);
+      break;
+    default :
+      // print_time_option == 'false'
+      break;
   }
 }

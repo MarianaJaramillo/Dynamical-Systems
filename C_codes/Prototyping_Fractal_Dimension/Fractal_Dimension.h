@@ -7,6 +7,9 @@
 // GSL library for statistics
 #include <gsl/gsl_statistics.h>
 
+// GSL library for sorting vectors
+#include <gsl/gsl_sort_double.h>
+
 // Library for handling vectors and matrices
 #include "Matrix-Vector_methods.h"
 
