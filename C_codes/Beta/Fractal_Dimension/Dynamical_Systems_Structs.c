@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 // Library with defined structs
 #include "Dynamical_Systems_Structs.h"
 

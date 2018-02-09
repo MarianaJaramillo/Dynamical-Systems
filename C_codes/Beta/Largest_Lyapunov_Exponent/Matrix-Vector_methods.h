@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
