@@ -13,6 +13,9 @@
 // Library with defined structs
 #include "Dynamical_Systems_Structs.h"
 
+#ifndef FRACTAL_DIMENSION  // header guard. Unique identifier for each header
+#define FRACTAL_DIMENSION
+
 /*************************************************************
   Methods and Routines
 *************************************************************/
@@ -29,3 +32,5 @@ void Box_Dimension(const Dynamical_System * sys,
                   const int output_option,
                   const int print_time_option,
                   const char *time_filename);
+
+#endif // FRACTAL_DIMENSION
