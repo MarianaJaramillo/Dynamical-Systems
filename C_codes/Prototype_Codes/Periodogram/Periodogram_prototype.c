@@ -1,15 +1,19 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
-// Librerías GSL para hacer FFT
+// GSL libraries for handling FFT
 #include <gsl/gsl_fft_real.h>
 #include <gsl/gsl_fft_halfcomplex.h>
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  DEFINICIÓN DE FUNCIONES
+  FUNCTION DEFINITIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 //============================================================
@@ -24,40 +28,40 @@ double function(double x) {
 
 //============================================================
 
-void Periodograma(double data[],
-                  double frecuencias[],
-                  double potencias[],
+void Periodogram(double data[],
+                  double frecuencies[],
+                  double powers[],
                   int Nx,
                   double Delta) {
   int i;
 
-  double div_potencias, div_frecuencias;
+  double div_power, div_frecuencies;
 
-  div_frecuencias = 1.0 / ( (double) Nx * Delta);
-  div_potencias = 1.0/ (double) (Nx * Nx);
+  div_frecuencies = 1.0 / ( (double) Nx * Delta);
+  div_power = 1.0/ (double) (Nx * Nx);
 
-  // Para la frecuencia 0
-  frecuencias[0] = 0.0;
+  // For frecuency 0
+  frecuencies[0] = 0.0;
 
-  potencias[0] = div_potencias * (data[0]*data[0]);
+  powers[0] = div_power * (data[0]*data[0]);
 
-  // Para las frecuencias internas
+  // For internal frecuencies
   for(i = 1; i < (Nx/2); i++){
-    frecuencias[i] = (double) i * div_frecuencias;
+    frecuencies[i] = (double) i * div_frecuencies;
 
-    potencias[i] = 2.0 * div_potencias
+    powers[i] = 2.0 * div_power
                   * (data[2*i - 1]*data[2*i - 1] + data[2*i]*data[2*i]);
   }
 
-  // Para la freuencia de Nyquist
+  // For Nyquist frecuency
   i = Nx/2;
-  frecuencias[i] = 1.0 / (2.0 * Delta);
+  frecuencies[i] = 1.0 / (2.0 * Delta);
 
   if( Nx % 2 == 0) {
-    potencias[i] = div_potencias * (data[Nx - 1] * data[Nx - 1]);
+    powers[i] = div_power * (data[Nx - 1] * data[Nx - 1]);
   }
   else {
-    potencias[i] = div_potencias
+    powers[i] = div_power
                   * (data[Nx - 2]*data[Nx - 2] + data[Nx - 1]*data[Nx - 1]);
   }
 }
@@ -69,39 +73,42 @@ void Periodograma(double data[],
 
 int main(int argc, char *argv[]) {
   /*============================================================
-    Periodograma
+    Periodogram
   ============================================================
 
-    El programa utiliza la transformada discreta de Fourier
-    de GSL (FTT) para calcular el periodograma de una serie
-    de tiempo.
+    The program uses the fast Fourier transform of GSL to
+    calculate the periodogram of the time series.
 
-    El programa genera el siguiente archivo de salida:
+    Output:
 
-      periodograma.dat ---> archivo con el vector de frecuencias
-                            y sus correspondientes pesos
-                            determinados por el periodograma.
+      periodogram.dat ---> file with the frecuencies vector
+                            and its corresponding powers.
 
-    EJECUCION DEL PROGRAMA
+                          Output format:
 
-      ./Periodograma.x Nx Delta
+                          column 1: frecuencies
+                          columna 2: powers
 
-    Donde:
+    PROGRAM EXECUTION
 
-      - Nx : Número de puntos de puntos de muestreo
+      ./Periodogram.x Nx Delta
 
-      - Delta : Intervalo de muestreo
+    Where:
+
+      - Nx : number of sampling points.
+
+      - Delta : Sampling interval time
   ============================================================*/
 
-  // Variables ingresadas por línea de comandos
+  // command line input variables
   int Nx;
   double Delta;
 
-  // Variables internas del programa
+  // Program's internal variables
   int i;
-  double *data=NULL, *frecuencias=NULL, *potencias=NULL;
+  double *data=NULL, *frecuencies=NULL, *powers=NULL;
 
-  // Archivos de salida
+  // Output files
   FILE *file=NULL;
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,19 +117,19 @@ int main(int argc, char *argv[]) {
   Delta  = atof(argv[2]);
 
   /*=========================================================
-    Asignar un bloque de memoria a los arreglos:
+    Asign a memory block to the vectors:
 
     double *data;
-    double *frecuencias;
-    double *potencias;
+    double *frecuencies;
+    double *powers;
 
-    Nx/2 es una división entera
+    Nx/2 is an integer division.
   =========================================================*/
   data  = (double *) malloc((size_t) Nx * sizeof(double));
-  frecuencias = (double *) malloc((size_t) (Nx/2 + 1) * sizeof(double));
-  potencias  = (double *) malloc((size_t) (Nx/2 + 1) * sizeof(double));
+  frecuencies = (double *) malloc((size_t) (Nx/2 + 1) * sizeof(double));
+  powers  = (double *) malloc((size_t) (Nx/2 + 1) * sizeof(double));
 
-  // Arreglo con el muestreo de datos
+  // Sampling points vector
   for(i = 0; i < Nx; i++) {
     data[i] = function(i*Delta);
   }
@@ -130,66 +137,60 @@ int main(int argc, char *argv[]) {
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   /*============================================================
-    Variables para la FFT de GSL
+    FFT variables
   ============================================================*/
   gsl_fft_real_wavetable *real;
   gsl_fft_real_workspace *work;
 
-  // Alocación de memoria
+  // memory allocation
   work = gsl_fft_real_workspace_alloc(Nx);
   real = gsl_fft_real_wavetable_alloc(Nx);
 
   // FFT
-  // Retorna data transformado
+  // Returns transformed data
   gsl_fft_real_transform(data, 1, Nx, real, work);
 
-  // Liberar memoria
+  // Free memory
   gsl_fft_real_wavetable_free(real);
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   /*============================================================
-    Periodograma
+    Periodogram
   ============================================================*/
-  Periodograma(data,
-              frecuencias,
-              potencias,
+  Periodogram(data,
+              frecuencies,
+              powers,
               Nx,
               Delta);
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
   /*============================================================
-    Imprimir datos en disco
+    Print
   ============================================================*/
-  file = fopen("periodograma.dat","w");
+  file = fopen("periodogram.dat","w");
 
   fprintf(file,
-    "#==================================================\n"
-    "#  Datos generados por el periodograma\n"
-    "#==================================================\n"
-    "#\n"
-    "# frecuencias : columna 1 \n"
-    "#   potencias : columna 2 \n"
-    "#\n"
+    "frecuencies\tpowers\n"
   );
 
   for(i = 0; i < (Nx/2 + 1); i++){
       fprintf(file,
         "%.16g\t%.16g\n"
-        , frecuencias[i], potencias[i]
+        , frecuencies[i], powers[i]
       );
   }
 
-  // Cerrar archivo
+  // Close file
   fclose(file);
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  // Liberar memoria
+  // Free memory
   free(data);
-  free(frecuencias);
-  free(potencias);
+  free(frecuencies);
+  free(powers);
 
 return 0;
 }

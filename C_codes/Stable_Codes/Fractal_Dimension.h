@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,14 +11,14 @@
 // GSL library for statistics
 #include <gsl/gsl_statistics.h>
 
-// GSL library for sorting vectors
-#include <gsl/gsl_sort_double.h>
-
 // Library for handling vectors and matrices
 #include "Matrix-Vector_methods.h"
 
 // Library with defined structs
 #include "Dynamical_Systems_Structs.h"
+
+#ifndef FRACTAL_DIMENSION  // header guard. Unique identifier for each header
+#define FRACTAL_DIMENSION
 
 /*************************************************************
   Methods and Routines
@@ -32,3 +36,5 @@ void Box_Dimension(const Dynamical_System * sys,
                   const int output_option,
                   const int print_time_option,
                   const char *time_filename);
+
+#endif // FRACTAL_DIMENSION

@@ -1,8 +1,15 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
 #include <time.h>
+
+#ifndef DYNAMICAL_SYSTEM  // header guard. Unique identifier for each header
+#define DYNAMICAL_SYSTEM
 
 /*************************************************************
   Define structs
@@ -98,3 +105,5 @@ void Dynamical_System_initialize(Dynamical_System * sys,
                                 void * function,
                                 const double * params,
                                 const double * initial_point);
+
+#endif // DYNAMICAL_SYSTEM

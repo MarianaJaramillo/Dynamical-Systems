@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+#
+
 #============================================================
 #	MAKEFILE
 #============================================================
@@ -32,32 +36,32 @@ CFLAGS=-Wall -g -c
 #     compiler itself.
 #
 #     Optimization levels:
-#	-O0 : Este nivel desconecta por completo la optimización.
-#	-O1 : El nivel de optimización más básico.
-#	-O2 : Un paso delante de -O1.
-#             Es el nivel recomendado de optimización.
-#	-O3 : El nivel más alto de optimización posible.
+#	-O0 : optimization disabled
+#	-O1 : Most basic optimization level
+#	-O2 : One step forward -O1.
+#             This is the recommended optimization level.
+#	-O3 : Higher possible optimization level.
 #
 #============================================================
 #OPT=-O3
 
 #============================================================
 # LDFLAGS:
-#	Opciones de linkado
+#	Linkage's flags
 #
-# -g: activa el depurador gdb
+# -g: Activates debugging with GDB
 #
-# -o: Hace el linkado de los archivos .o y genera el ejecutable
+# -o: Links .o objects and generates executable program
 #
 # MATHFLAGS:
-# -lm: Hace el linkado de la libreria math.h
-#      (debe ir al final del comando de compilacion)
+# -lm: links to math.h
+#      (it must be located at the final place in compilation statement)
 #
 # GSLFLAGS=-lgsl -lgslcblas
-#	Hace el linkado de las librerias de GSL
-# Ej:
+#	Links to GSL libraries
+# e.g.:
 #
-#	$ gcc OPT -Wall -g -o ejecutable.x *.o -lgsl -lgslcblas -lm
+#	$ gcc OPT -Wall -g -o executable.x *.o -lgsl -lgslcblas -lm
 #============================================================
 LDFLAGS=-Wall -g -o
 MATHFLAGS=-lm
@@ -65,13 +69,13 @@ GSLFLAGS=-lgsl -lgslcblas
 
 
 #============================================================
-#	Box dimension
+#	Periodogram
 #============================================================
-SOURCES_box=Henon_Box_Dimension.c Fractal_Dimension.c Dynamical_Systems_Structs.c Matrix-Vector_methods.c
-OBJECTS_box=$(SOURCES_box:.c=.o)
+SOURCES_periodogram=Periodogram_prototype.c
+OBJECTS_periodogram=$(SOURCES_periodogram:.c=.o)
 
-box:  $(OBJECTS_box)
-	$(CC) $(OPT) $(LDFLAGS) Henon_Box_Dimension.x $(OBJECTS_box) $(GSLFLAGS) $(MATHFLAGS)
+periodogram:  $(OBJECTS_periodogram)
+	$(CC) $(OPT) $(LDFLAGS) Periodogram_prototype.x $(OBJECTS_periodogram) $(GSLFLAGS) $(MATHFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
@@ -82,9 +86,3 @@ box:  $(OBJECTS_box)
 #============================================================
 clean:
 	rm -r *.o *.x
-
-#============================================================
-#	Clean Error - Output files
-#============================================================
-errclean:
-	rm -r *.err* *.out*

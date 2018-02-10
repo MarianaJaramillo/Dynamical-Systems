@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 // Library for calculating fractal dimensions
 #include "Fractal_Dimension.h"
 

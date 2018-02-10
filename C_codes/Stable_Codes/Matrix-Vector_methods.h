@@ -1,8 +1,14 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
 
+#ifndef MATRIX_VECTOR  // header guard. Unique identifier for each header
+#define MATRIX_VECTOR
 
 /*************************************************************
   Methods and Routines
@@ -55,3 +61,5 @@ double Dot_product(double *a,
 
 double Norm(double *a,
             int n);
+
+#endif // MATRIX_VECTOR

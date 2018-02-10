@@ -1,3 +1,7 @@
+//
+// Copyright (c) 2018 by Camilo-HG. All Rights Reserved.
+//
+
 // Library with defined structs
 #include "Dynamical_Systems_Structs.h"
 
@@ -87,7 +91,7 @@ void Dynamical_System_initialize(Dynamical_System * sys,
   /*============================================================
     Setting out system's parameters
   ============================================================*/
-  for(i = 0; i < sys->dimension; i++) {
+  for(i = 0; i < sys->Nparams; i++) {
     sys->params[i] = params[i];
   }
 
