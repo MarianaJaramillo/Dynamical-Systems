@@ -9,7 +9,7 @@
 
 void Periodogram(const double data[],
                 const int Nx,
-                const double Delta
+                const double Delta,
                 double *frecuencies,
                 double *powers,
                 const char *filename) {
