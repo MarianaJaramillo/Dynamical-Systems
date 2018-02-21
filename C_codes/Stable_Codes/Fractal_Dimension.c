@@ -448,7 +448,7 @@ void Box_Dimension(const Dynamical_System * sys,
     sel_exp_file = fopen("Selected_Exponents.dat","w");
 
     fprintf(sel_exp_file,
-            "c5\tc6\tc7\n", );
+            "c5\tc6\tc7\n");
   }
 
   for(i = 2; i < (max_exponent - 1); i++) {
