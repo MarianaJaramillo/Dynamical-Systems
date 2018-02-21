@@ -24,6 +24,39 @@
 #define FRACTAL_DIMENSION
 
 /*************************************************************
+  Define structs
+*************************************************************/
+typedef struct Hyperbox {
+  /*============================================================
+    STRUCT: Hyperbox
+
+      box[sys.dimension][2]
+      ==========================
+
+
+      points[Npoints][sys.dimension]
+      ==========================
+
+        **points: Stores system's points belonging
+
+        Npoints: Gives us information about how
+                many points has the time series.
+
+        dimension: Gives us information about the
+                  dimensionality of the system.
+
+        Thus:
+
+          points[i][j] ---> corresponds to the j-th component
+                            of the i-th point.
+  ============================================================*/
+  double **box;
+  double **point;
+  size_t Npoints;
+} Hyperbox;
+
+
+/*************************************************************
   Methods and Routines
 *************************************************************/
 
