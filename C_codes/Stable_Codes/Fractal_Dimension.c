@@ -31,7 +31,8 @@ void Box_Dimension(const Dynamical_System * sys,
                   const double tolerance_pct,
                   const int output_option,
                   const int print_time_option,
-                  const char *time_filename) {
+                  const char *time_filename,
+                  const int print_selected_exponents) {
   /*============================================================
     - *sys_Fractal_Dimension : pointer for System's Fractal Dimension.
 
@@ -90,6 +91,9 @@ void Box_Dimension(const Dynamical_System * sys,
                           s = remained seconds elapsed
 
     - time_filename :
+
+    - print_selected_exponents : 0 = without Selected_Exponents.dat output
+                                1 = with Selected_Exponents.dat output
   ============================================================*/
   double asst, l_asst, factor_decrease;
   int i, j, exponent, Npoints, Nboxes, point_detection;
@@ -435,7 +439,18 @@ void Box_Dimension(const Dynamical_System * sys,
   /*============================================================
     Calculate final_slope
     First two points and last point are eliminated
+    Points selected are printed in Selected_Exponents.dat
+    if print_selected_exponents == 1
   ============================================================*/
+  FILE *sel_exp_file=NULL;
+
+  if(print_selected_exponents) {
+    sel_exp_file = fopen("Selected_Exponents.dat","w");
+
+    fprintf(sel_exp_file,
+            "c5\tc6\tc7\n", );
+  }
+
   for(i = 2; i < (max_exponent - 1); i++) {
 
     diff_down = fabs(c7[i] - c7[i - 1])
@@ -451,10 +466,25 @@ void Box_Dimension(const Dynamical_System * sys,
         selected_slopes[0] = c7[i - 1];
         selected_slopes[1] = c7[i];
 
+        if(print_selected_exponents){
+          fprintf(sel_exp_file,
+                  "%.16g\t%.16g\t%.16g\n"
+                  , c5[i], c6[i], c7[i - 1]);
+
+          fprintf(sel_exp_file,
+                  "%.16g\t%.16g\t%.16g\n"
+                  , c5[i + 1], c6[i + 1], c7[i]);
+        }
       }
       else {
         selected_slopes[Nselected_slopes] = c7[i];
         Nselected_slopes++;
+
+        if(print_selected_exponents){
+          fprintf(sel_exp_file,
+                  "%.16g\t%.16g\t%.16g\n"
+                  , c5[i + 1], c6[i + 1], c7[i]);
+        }
       }
     }
     else {
@@ -462,8 +492,18 @@ void Box_Dimension(const Dynamical_System * sys,
         any_coincidence = 0;
         selected_slopes[Nselected_slopes] = c7[i];
         Nselected_slopes++;
+
+        if(print_selected_exponents){
+          fprintf(sel_exp_file,
+                  "%.16g\t%.16g\t%.16g\n"
+                  , c5[i + 1], c6[i + 1], c7[i]);
+        }
       }
     }
+  }
+
+  if(print_selected_exponents){
+    fclose(sel_exp_file);
   }
 
   /*============================================================

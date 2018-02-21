@@ -35,6 +35,7 @@ void Box_Dimension(const Dynamical_System * sys,
                   const double tolerance_pct,
                   const int output_option,
                   const int print_time_option,
-                  const char *time_filename);
+                  const char *time_filename,
+                  const int print_selected_exponents);                
 
 #endif // FRACTAL_DIMENSION
