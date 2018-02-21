@@ -18,8 +18,8 @@
 //============================================================
 
 void Periodogram(const double data[],
-                const int Nx,
+                const int Ndata,
                 const double Delta,
                 double *frecuencies,
                 double *powers,
-                const char *filename);
+                int *Nfrecuencies);
