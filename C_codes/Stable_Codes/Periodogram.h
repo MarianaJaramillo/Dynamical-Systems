@@ -15,7 +15,20 @@
 // Library for handling vectors and matrices
 #include "Matrix-Vector_methods.h"
 
-//============================================================
+// Library with defined structs
+#include "Dynamical_Systems_Structs.h"
+
+#ifndef PERIODOGRAM  // header guard. Unique identifier for each header
+#define PERIODOGRAM
+
+/*************************************************************
+  Methods and Routines
+*************************************************************/
+
+void DynamicalSystem2array(Dynamical_System * sys,
+                          const int coordinate,
+                          double *data,
+                          int *Ndata);
 
 void Periodogram(const double data[],
                 const int Ndata,
@@ -23,3 +36,5 @@ void Periodogram(const double data[],
                 double *frecuencies,
                 double *powers,
                 int *Nfrecuencies);
+
+#endif // PERIODOGRAM

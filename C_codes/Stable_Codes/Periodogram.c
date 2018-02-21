@@ -5,6 +5,34 @@
 // Library for handling vectors and matrices
 #include "Periodogram.h"
 
+
+//============================================================
+void DynamicalSystem2array(Dynamical_System * sys,
+                          const int coordinate,
+                          double *data,
+                          int *Ndata) {
+  /*============================================================
+    Transforms data from Dynamical_System' points to data array
+
+    - *data = NULL
+              data's vector
+
+    - Ndata : number of sampling points.
+
+    Remember: sys.points[Npoints][dimension]
+  ============================================================*/
+  int i;
+
+  *Ndata = sys->Npoints;
+
+  data = (double *) malloc((size_t) (*Ndata) * sizeof(double));
+
+  for(i = 0; i < (*Ndata); i++) {
+    data[i] = sys->points[i][coordinate];
+  }
+}
+
+
 //============================================================
 
 void Periodogram(const double data[],
