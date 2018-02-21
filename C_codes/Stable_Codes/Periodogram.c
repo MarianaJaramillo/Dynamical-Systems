@@ -83,7 +83,7 @@ void Periodogram(const double data[],
   /*=========================================================
     Copy data to data_aux to avoid to modify data
   =========================================================*/
-  Vector_copy(data,
+  Vector_copy((double *) data,
               data_aux,
               Ndata);
 
