@@ -27,14 +27,14 @@
 
 void DynamicalSystem2array(Dynamical_System * sys,
                           const int coordinate,
-                          double *data,
+                          double **data,
                           int *Ndata);
 
-void Periodogram(const double data[],
+void Periodogram(double *data,
                 const int Ndata,
                 const double Delta,
-                double *frecuencies,
-                double *powers,
+                double **frecuencies,
+                double **powers,
                 int *Nfrecuencies);
 
 #endif // PERIODOGRAM

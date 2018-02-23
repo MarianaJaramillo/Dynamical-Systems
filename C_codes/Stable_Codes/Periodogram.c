@@ -9,37 +9,39 @@
 //============================================================
 void DynamicalSystem2array(Dynamical_System * sys,
                           const int coordinate,
-                          double *data,
+                          double **data,
                           int *Ndata) {
   /*============================================================
     Transforms data from Dynamical_System' points to data array
 
-    - *data = NULL
-              data's vector
+    - **data : pointer to *data=NULL array which will
+              store data from sys.points[Npoints][coordinate]
 
     - Ndata : number of sampling points.
 
     Remember: sys.points[Npoints][dimension]
+
+              *( (*data) + i) = data[i]
   ============================================================*/
   int i;
 
   *Ndata = sys->Npoints;
 
-  data = (double *) malloc((size_t) (*Ndata) * sizeof(double));
+  *data = (double *) malloc((size_t) (*Ndata) * sizeof(double));
 
   for(i = 0; i < (*Ndata); i++) {
-    data[i] = sys->points[i][coordinate];
+    *( (*data) + i) = sys->points[i][coordinate];
   }
 }
 
 
 //============================================================
 
-void Periodogram(const double data[],
+void Periodogram(double *data,
                 const int Ndata,
                 const double Delta,
-                double *frecuencies,
-                double *powers,
+                double **frecuencies,
+                double **powers,
                 int *Nfrecuencies) {
   /*============================================================
     The program uses the fast Fourier transform of GSL to
@@ -51,9 +53,11 @@ void Periodogram(const double data[],
 
     - Delta : Sampling interval time
 
-    - *frecuencies = NULL
+    - **frecuencies: pointer to *frecuencies=NULL array which will
+                    store frecuencies' info.
 
-    - *powers = NULL
+    - **powers: pointer to *powers=NULL array which will
+                store powers' info.
 
     - *Nfrecuencies = number of frecuencies returned
   ============================================================*/
@@ -77,13 +81,13 @@ void Periodogram(const double data[],
   *Nfrecuencies = Ndata/2 + 1;
 
   data_aux = (double *) malloc((size_t) Ndata * sizeof(double));
-  frecuencies = (double *) malloc((size_t) Nfrecuencies * sizeof(double));
-  powers  = (double *) malloc((size_t) Nfrecuencies * sizeof(double));
+  *frecuencies = (double *) malloc((size_t) (*Nfrecuencies) * sizeof(double));
+  *powers  = (double *) malloc((size_t) (*Nfrecuencies) * sizeof(double));
 
   /*=========================================================
     Copy data to data_aux to avoid to modify data
   =========================================================*/
-  Vector_copy((double *) data,
+  Vector_copy(data,
               data_aux,
               Ndata);
 
@@ -110,33 +114,36 @@ void Periodogram(const double data[],
 
   /*============================================================
     Periodogram
+
+    *( (*frecuencies) + i) = frecuencies[i]
+    *( (*powers) + i) = powers[i]
   ============================================================*/
 
   div_frecuencies = 1.0 / ( (double) Ndata * Delta);
-  div_power = 1.0/ (double) (Ndata * Ndata);
+  div_power = 1.0/ ( (double) Ndata * (double) Ndata);
 
   // For frecuency 0
-  frecuencies[0] = 0.0;
+  *( (*frecuencies) + 0) = 0.0;
 
-  powers[0] = div_power * (data_aux[0]*data_aux[0]);
+  *( (*powers) + 0) = div_power * (data_aux[0]*data_aux[0]);
 
   // For internal frecuencies
   for(i = 1; i < (Ndata/2); i++){
-    frecuencies[i] = (double) i * div_frecuencies;
+    *( (*frecuencies) + i) = (double) i * div_frecuencies;
 
-    powers[i] = 2.0 * div_power
+    *( (*powers) + i) = 2.0 * div_power
                   * (data_aux[2*i - 1]*data_aux[2*i - 1] + data_aux[2*i]*data_aux[2*i]);
   }
 
   // For Nyquist frecuency
   i = Ndata/2;
-  frecuencies[i] = 1.0 / (2.0 * Delta);
+  *( (*frecuencies) + i) = 1.0 / (2.0 * Delta);
 
   if( Ndata % 2 == 0) {
-    powers[i] = div_power * (data_aux[Ndata - 1] * data_aux[Ndata - 1]);
+    *( (*powers) + i) = div_power * (data_aux[Ndata - 1] * data_aux[Ndata - 1]);
   }
   else {
-    powers[i] = div_power
+    *( (*powers) + i) = div_power
                   * (data_aux[Ndata - 2]*data_aux[Ndata - 2] + data_aux[Ndata - 1]*data_aux[Ndata - 1]);
   }
 
