@@ -76,10 +76,14 @@ typedef struct Dynamical_System {
   void (*function) (const double initial_point[],
                     double f[],
                     const double *params);
+  void (*Jac_function) (const double initial_point[],
+                    double f[][],
+                    const double *params);
   double *params;
   double *initial_point;
   double **transient_points;
   double **points;
+  double ***Jac_vector;
   size_t dimension;
   size_t Nparams;
   size_t transient;
@@ -93,6 +97,8 @@ typedef struct Dynamical_System {
 /* Function evaluation macros */
 #define SYS_FN_EVOL(S, yo, f)  (*((S)->function))(yo,f,(S)->params)
 
+#define SYS_JAC_EVOL(S, yo, f)  (*((S)->Jac_function))(yo,f,(S)->params)
+
 void Dynamical_System_alloc(Dynamical_System * sys,
                             size_t dimension,
                             size_t Nparams,
@@ -103,6 +109,7 @@ void Dynamical_System_free(Dynamical_System * sys);
 
 void Dynamical_System_initialize(Dynamical_System * sys,
                                 void * function,
+                                void * Jac_function,
                                 const double * params,
                                 const double * initial_point);
 
