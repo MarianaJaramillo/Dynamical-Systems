@@ -42,9 +42,20 @@ void Dynamical_System_alloc(Dynamical_System * sys,
   /*============================================================
     Setting up system's points
   ============================================================*/
-  sys->points = (double **) malloc((size_t) sys->Npoints * sizeof(double*));
+  sys->points = (double **) malloc((size_t) sys->Npoints * sizeof(double *));
   for(i = 0; i < (sys->Npoints); i++) {
     sys->points[i] = (double *) malloc((size_t) sys->dimension * sizeof(double));
+  }
+
+  /*============================================================
+    Setting up system's jacobian
+  ============================================================*/
+  sys->Jac_vector = (double ***) malloc((size_t) sys->Npoints * sizeof(double **));
+  for (int i = 0; i < (sys->Npoints); ++i){
+    sys->Jac_vector[i] = (double **) malloc((size_t) sys->dimension * sizeof(double *));
+    for (int j = 0; j < (sys->dimension); ++j){
+      sys->Jac_vector[i][j] = (double *) malloc((size_t) sys->dimension * sizeof(double));
+    }
   }
 }
 
@@ -71,6 +82,17 @@ void Dynamical_System_free(Dynamical_System * sys) {
     Free system's points
   ============================================================*/
   free(sys->points);
+
+  /*============================================================
+    Free system's jacobian
+  ============================================================*/
+  for (int i = 0; i < (sys->Npoints); ++i){
+    for (int j = 0; j < (sys->dimension); ++j){
+        free(sys->Jac_vector[i][j]);
+    }
+    free(sys->Jac_vector[i]);
+  }
+  free(sys->Jac_vector);
 }
 
 
@@ -78,6 +100,7 @@ void Dynamical_System_free(Dynamical_System * sys) {
 
 void Dynamical_System_initialize(Dynamical_System * sys,
                                 void * function,
+                                void * Jac_function,
                                 const double * params,
                                 const double * initial_point) {
   // Method's internal variable
@@ -87,6 +110,7 @@ void Dynamical_System_initialize(Dynamical_System * sys,
     Setting out system's function
   ============================================================*/
   sys->function = function;
+  sys->Jac_function = Jac_function;
 
   /*============================================================
     Setting out system's parameters
@@ -111,7 +135,7 @@ void Dynamical_System_initialize(Dynamical_System * sys,
   }
 
   /*============================================================
-    Setting out system's points
+    Setting out system's points and jacobian
   ============================================================*/
   for(i = 0; i < sys->dimension; i++) {
     sys->points[0][i] = sys->transient_points[sys->transient - 1][i];
@@ -119,5 +143,6 @@ void Dynamical_System_initialize(Dynamical_System * sys,
 
   for(i = 1; i < (sys->Npoints); i++) {
     SYS_FN_EVOL(sys, sys->points[i-1], sys->points[i]);
+    SYS_JAC_EVOL(sys, sys->points[i - 1], sys->Jac_vector[i]);
   }
 }
